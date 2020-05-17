@@ -1,0 +1,154 @@
+imports:
+    - { resource: parameters.yml }
+    - { resource: errors.yml }
+    - { resource: security.yml }
+    - { resource: services.yml }
+
+# Put parameters here that don't need to change on each machine where the app is deployed
+# https://symfony.com/doc/current/best_practices/configuration.html#application-related-configuration
+parameters:
+    locale: fr
+    resettingRetryTtl: 300
+
+framework:
+    templating:
+        engines: ['twig']
+    #esi: ~
+    translator: { fallbacks: ['%locale%'] }
+    secret: '%secret%'
+    router:
+        resource: '%kernel.project_dir%/app/config/routing.yml'
+        strict_requirements: ~
+    form: ~
+    csrf_protection: ~
+    validation: { enable_annotations: true }
+    serializer: { enable_annotations: true }
+    default_locale: '%locale%'
+    trusted_hosts: ~
+    session:
+        # https://symfony.com/doc/current/reference/configuration/framework.html#handler-id
+        handler_id: session.handler.native_file
+        save_path: '%kernel.project_dir%/var/sessions/%kernel.environment%'
+    fragments: ~
+    http_method_override: true
+    assets: ~
+    php_errors:
+        log: true
+
+# Twig Configuration
+twig:
+    debug: '%kernel.debug%'
+    strict_variables: '%kernel.debug%'
+    cache: false
+    globals:
+        kernelRootDir: '%kernel.root_dir%'
+
+# Doctrine Configuration
+doctrine:
+    dbal:
+        driver: '%database_driver%'
+        host: '%database_host%'
+        port: '%database_port%'
+        dbname: '%database_name%'
+        user: '%database_user%'
+        password: '%database_password%'
+        charset: UTF8
+        # if using pdo_sqlite as your database driver:
+        #   1. add the path in parameters.yml
+        #     e.g. database_path: '%kernel.project_dir%/var/data/data.sqlite'
+        #   2. Uncomment database_path in parameters.yml.dist
+        #   3. Uncomment next line:
+        #path: '%database_path%'
+
+    orm:
+        auto_generate_proxy_classes: true
+        proxy_dir: '%kernel.cache_dir%/doctrine/orm/Proxies'
+        proxy_namespace:      Proxies
+        naming_strategy: doctrine.orm.naming_strategy.underscore
+        auto_mapping: true
+        dql:
+            string_functions:
+                regexp: DoctrineExtensions\Query\Mysql\Regexp
+            numeric_functions:
+                rand: DoctrineExtensions\Query\Mysql\Rand
+
+# Doctrine extensions
+stof_doctrine_extensions:
+    orm:
+        default:
+            timestampable: true
+            sluggable: true
+
+# Swiftmailer Configuration
+swiftmailer:
+    transport: "mailjet"
+
+mailjet:
+    api_key:    "%mailer_user%"
+    secret_key: "%mailer_password%"
+    
+
+fos_oauth_server:
+    db_driver: orm       # Drivers available: orm, mongodb, or propel
+    client_class:        Sogedial\OAuthBundle\Entity\Client
+    access_token_class:  Sogedial\OAuthBundle\Entity\AccessToken
+    refresh_token_class: Sogedial\OAuthBundle\Entity\RefreshToken
+    auth_code_class:     Sogedial\OAuthBundle\Entity\AuthCode
+    service:
+        user_provider: sogedial.oauth.user_provider
+        #options:
+            #supported_scopes: super_admin admin user
+
+sensio_framework_extra:
+    request: { converters: true }
+
+fos_rest:
+    routing_loader:
+        default_format: json
+    view:
+        view_response_listener: true
+    body_converter:
+        enabled: true
+    param_fetcher_listener: force        
+    body_listener: true
+    #serializer:
+        #serialize_null: true
+    exception:
+        enabled: true
+        codes:
+            Sogedial\ApiBundle\Exception\EntityNotFoundException: !php/const Sogedial\ApiBundle\Exception\EntityNotFoundException::STATUS_CODE
+            Sogedial\ApiBundle\Exception\DeleteEntityException: !php/const Sogedial\ApiBundle\Exception\DeleteEntityException::STATUS_CODE
+            Sogedial\ApiBundle\Exception\InsertEntityException: !php/const Sogedial\ApiBundle\Exception\InsertEntityException::STATUS_CODE
+            Sogedial\ApiBundle\Exception\UpdateEntityException: !php/const Sogedial\ApiBundle\Exception\UpdateEntityException::STATUS_CODE
+            Sogedial\ApiBundle\Exception\CartEmptyException: !php/const Sogedial\ApiBundle\Exception\CartEmptyException::STATUS_CODE
+            Sogedial\ApiBundle\Exception\OrderForbiddenException: !php/const Sogedial\ApiBundle\Exception\OrderForbiddenException::STATUS_CODE
+            Sogedial\ApiBundle\Exception\ParametersException: !php/const Sogedial\ApiBundle\Exception\ParametersException::STATUS_CODE
+            Sogedial\ApiBundle\Exception\UnauthorizedException: !php/const Sogedial\ApiBundle\Exception\UnauthorizedException::STATUS_CODE
+            Sogedial\ApiBundle\Exception\BadRequestException: !php/const Sogedial\ApiBundle\Exception\BadRequestException::STATUS_CODE
+            Sogedial\ApiBundle\Exception\ForbiddenException: !php/const Sogedial\ApiBundle\Exception\ForbiddenException::STATUS_CODE
+            Sogedial\ApiBundle\Exception\UploadException: !php/const Sogedial\ApiBundle\Exception\UploadException::STATUS_CODE
+        messages:
+            'Sogedial\ApiBundle\Exception\EntityNotFoundException': true
+            'Sogedial\ApiBundle\Exception\DeleteEntityException': true
+            'Sogedial\ApiBundle\Exception\InsertEntityException': true
+            'Sogedial\ApiBundle\Exception\UpdateEntityException': true
+            'Sogedial\ApiBundle\Exception\CartEmptyException': true
+            'Sogedial\ApiBundle\Exception\OrderForbiddenException': true
+            'Sogedial\ApiBundle\Exception\ParametersException': true
+            'Sogedial\ApiBundle\Exception\UnauthorizedException': true
+            'Sogedial\ApiBundle\Exception\BadRequestException': true
+            'Sogedial\ApiBundle\Exception\ForbiddenException': true
+            'Sogedial\ApiBundle\Exception\UploadException': true
+
+    format_listener:
+        rules:
+            - { path: '^/api', priorities: ['json'], fallback_format: 'json'}
+            #- { path: '^/', priorities: ['json'], fallback_format: 'json' }
+            - { path: '^/', stop: true }
+            - { path: '^/api', stop: true }
+
+#resolve error when update inexist entity
+jms_serializer:
+    object_constructors:
+        doctrine:
+            fallback_strategy: 'exception'

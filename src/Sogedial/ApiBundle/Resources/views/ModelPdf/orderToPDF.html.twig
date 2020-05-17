@@ -1,0 +1,205 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+
+        <table class="lgo">
+            <tr>
+                <td style="text-align: left; border: none"><img src="{{ kernelRootDir ~ '/../web/images/logo-notification.png' }}" width="148"
+                                                  height="40"/></td>
+                <td style="text-align: left; border: none"><strong>Bon de commande N° {{ order.number }}</strong></td>
+                <td style="text-align: right; border: none"><strong>le {{ "now"|date("d/m/Y") }}</strong></td>
+            </tr>
+        </table>
+
+
+
+        <table class="borderStyle" style="margin-bottom: 8px; font-size: 9px; width: 100%;">
+            <thead>
+            <tr style="background-color: #dddddd">
+                <th style="text-align: center">Coordonnées client</th>
+                <th style="text-align: center">Coordonnées du commercial Commande.com</th>
+            </tr>
+            </thead>
+
+            <tbody>
+            <tr>
+                <td width="20%">
+                    <table class="lgo" style="margin-top: 2px; font-size: 9px;">
+                        <tr>
+                            <td style="padding-left: 12px;"><strong>Nom du magasin :</strong></td>
+                            <td style="text-align: left;">{{ order.user.client.name | upper }}</td>
+                        </tr>
+
+                    {% if order.user.firstname is not null and  order.user.firstname is not empty %}
+                        <tr>
+                            <td style="padding-left: 12px;"><strong>Nom du client :</strong></td>
+                            <td style="text-align: left;">{{ order.user.firstname | upper }}</td>
+                        </tr>
+                    {% endif %}
+
+                        <tr>
+                            <td style="padding-left: 12px;"><strong>Email :</strong></td>
+                            <td style="text-align: left;">{{ order.user.email |default('Non renseignée') }}</td>
+                        </tr>
+
+                        <tr>
+                            <td style="padding-left: 12px;"><strong>Adresse :</strong></td>
+                            <td style="text-align: left;">{{ order.user.client.address | capitalize }} {{ order.user.client.zipCode }} {{ order.user.client.city }}</td>
+                        </tr>
+
+                        <tr>
+                            <td style="padding-left: 12px;"><strong>Tél :</strong></td>
+                            <td style="text-align: left;">{{ order.user.telNumber1 }}</td>
+                        </tr>
+
+                        <tr>
+                            <td>&nbsp;</td>
+                            <td>&nbsp;</td>
+                        </tr>
+
+                        <tr>
+                            <td>&nbsp;</td>
+                            <td>&nbsp;</td>
+                        </tr>
+                    </table>
+                </td>
+                <td width="20%">
+                    <table class="lgo" style="margin-top: 2px; font-size: 9px;">
+                        <tr>
+                            <td style="padding-left: 12px;"><strong>Société :</strong></td>
+                            <td style="text-align: left;">{{ order.platform.name | upper }}</td>
+                        </tr>
+
+                        <tr>
+                            <td style="padding-left: 12px;"><strong>Nom : </strong></td>
+                            <td style="text-align: left;">{{ commercial.lastname | upper }} {{ commercial.firstname | capitalize }}{#{{ commercialInfo.nom | upper }} {{ commercialInfo.prenom | capitalize }}#}</td>
+                        </tr>
+
+                        <tr>
+                            <td style="padding-left: 12px;"><strong>Email :</strong></td>
+                            <td style="text-align: left;">{{ commercial.email }}</td>
+                        </tr>
+
+                        <tr>
+                            <td style="padding-left: 12px;"><strong>Fixe :</strong></td>
+                            <td style="text-align: left;">{{ commercial.telNumber1 }}</td>
+                        </tr>
+
+                        <tr>
+                            <td style="padding-left: 12px;"><strong>Mobile :</strong></td>
+                            <td style="text-align: left;">{{ commercial.telNumber2 }}</td>
+                        </tr>
+
+                        <tr>
+                            <td style="padding-left: 12px;"><strong>Fax :</strong></td>
+                            <td style="text-align: left;">{{ commercial.fax }}</td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+
+            </tbody>
+        </table>
+
+
+
+  
+{% include 'SogedialApiBundle:ModelPdf:orderItems.html.twig'  with {'order': order, 'orderItemByCategory': orderItemByCategory, 'tempDir': tempDir } %}
+
+    <div style=" margin: 20px 0px; border: solid 1px darkgrey; padding-left: 2px; font-size: 12px">
+        <div style="display: inline-block; width: 32%; vertical-align: middle">Nbr de colis : {{ order.references['packages'] }}</div>
+        <div style="display: inline-block; width: 32%; vertical-align: middle">Volume :</div>
+        <div style="display: inline-block; width: 32%; vertical-align: middle">poids brut :</div>
+    </div>
+
+    <div>
+        <table style="border: 1px solid darkgrey; width: 20%">
+            {% if order.platform.name | lower == 'sofrigu' %}
+                <tr>
+                    <td class="tdAlignmentLeft" style="border-bottom: 1px solid darkgrey">Total TTC</td>
+                    <td class="tdAlignmentLeft" style="border-bottom: 1px solid darkgrey;">:
+                        <strong>{{ order.totalPriceVat | number_format(2, ".", " ") }} EUR</strong></td>
+                </tr>
+            {% elseif order.platform.name | lower == 'sogedial' %}
+                <tr>
+                    <td class="tdAlignmentLeft" style="border-bottom: 1px solid darkgrey;">Total HT</td>
+                    <td class="tdAlignmentLeft" style="border-bottom: 1px solid darkgrey;">:
+                        <strong>{{ order.totalPrice | number_format(2, ".", " ") }} EUR</strong></td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td class="tdAlignmentLeft" style="border-bottom: 1px solid darkgrey;">Total HT</td>
+                    <td class="tdAlignmentLeft" style="border-bottom: 1px solid darkgrey;">:
+                        <strong>{{ order.totalPrice|number_format(2, ".", " ") }} EUR</strong></td>
+                </tr>
+
+                <tr>
+                    <td class="tdAlignmentLeft">TVA 2,10 % </td>
+                    <td class="tdAlignmentLeft">: <strong>{{ tva.totalTva_21|number_format(2, ".", " ") }} EUR</strong></td>
+                </tr>
+
+                <tr>
+                    <td class="tdAlignmentLeft">TVA 8,50 % </td>
+                    <td class="tdAlignmentLeft">: <strong>{{ tva.totalTva_85|number_format(2, ".", " ") }} EUR</strong></td>
+                </tr>
+
+                <tr>
+                    <td class="tdAlignmentLeft">Total TVA </td>
+                    <td class="tdAlignmentLeft">: <strong>{{ tva.totalTva|number_format(2, ".", " ") }} EUR</strong></td>
+                </tr>
+
+                <tr>
+                    <td class="tdAlignmentLeft" style="border-top: 1px solid darkgrey;">Total TTC</td>
+                    <td class="tdAlignmentLeft" style="border-top: 1px solid darkgrey;">:
+                        <strong>{{ order.totalPriceVat|number_format(2, ".", " ") }} EUR</strong></td>
+                </tr>
+            {% endif %}
+        </table>
+
+    </div>
+{% endblock %}
+
+{% block stylesheets %}
+    <style>
+
+        @media print {
+            thead { display: table-header-group; }
+            tfoot { display: table-row-group; }
+            /*tr { page-break-inside: avoid; }*/
+        }
+
+        @page {
+            /*margin: 10px 10px 20px 10px !important;*/
+            page-break-after: avoid;
+            page-break-before: avoid;
+        }
+
+        table {
+            font-family: arial, sans-serif;
+            border-collapse: collapse;
+            width: 100%;
+            font-size: 8px;
+            page-break-after: avoid;
+            page-break-before: avoid;
+        }
+
+        td, th {
+            text-align: left;
+            padding: 1px;
+        }
+
+
+        .borderStyle, td, th {
+            border: 1px solid darkgrey;
+        }
+
+        .lgo td {
+            border:none;
+        }
+
+        .tdAlignmentLeft {
+            text-align: left;
+        }
+    </style>
+
+{% endblock %}

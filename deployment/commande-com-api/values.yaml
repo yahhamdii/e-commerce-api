@@ -1,0 +1,71 @@
+---
+# Default values for commande-com-api.
+# Declare variables to be passed into your templates.
+
+fullnameOverride: commande-com-api
+
+replicaCount: 1
+
+php:
+  image:
+    repository: eu.gcr.io/commande-com-preprod/commande-com-api
+    pullPolicy: IfNotPresent
+
+nginx:
+  image:
+    repository: eu.gcr.io/commande-com-preprod/commande-com-api
+    pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: true 
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+envs:
+  - name: DATABASE_HOST
+    value: 127.0.0.1
+  - name: DATABASE_NAME
+    value: catalogue
+  - name: DATABASE_USER
+    valueFrom:
+      secretKeyRef:
+        name: cloudsql-db-credentials
+        key: username
+  - name: DATABASE_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: cloudsql-db-credentials
+        key: password
+trace:
+  enabled: false
+
+cloudsqlproxy:
+  # set to false to disable cloud sql proxy
+  enabled: 1
+  connectionName: "commande-com-preprod:europe-west1-c:commande-com-database"
+  credentialsSecret: "cloudsql-instance-credentials"
+
+# Horizontal Pod Autoscaler
+autoscaling:
+  enabled: 0
+  minReplicas: 1
+  maxReplicas: 1
+  cpu:
+    enabled: 0
+    targetPercentage: 60
+  memory:
+    enabled: 0
+    targetPercentage: 60
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+strategy:
+  type: Recreate

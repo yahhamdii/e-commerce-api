@@ -1,0 +1,4 @@
+services:
+#    sogedial_api.example:
+#        class: Sogedial\ApiBundle\Example
+#        arguments: ["@service_id", "plain_value", "%parameter%"]

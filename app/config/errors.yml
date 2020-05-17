@@ -1,0 +1,5 @@
+parameters:
+    errors: 
+        404: 'not found'
+        500: 'msg 500'
+        400: 'msg 400'

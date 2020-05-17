@@ -1,0 +1,115 @@
+---
+replicaCount: 1
+
+ingress:
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "http://pp.commande.com https://pp.commande.com"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization,X-Switch-User"
+  path: /
+  hosts:
+    - api.pp.commande.com
+    - api-pp.commande.com
+  tls:
+    - secretName: default-ingress-tls
+      hosts:
+        - api-pp.commande.com
+php:
+  config: "configs/php.preprod.ini"
+  resources:
+    limits:
+      memory: 512Mi
+    requests:
+      cpu: 50m
+      memory: 256Mi
+
+nginx:
+  liveness:
+    enabled: 1
+  readiness:
+    enabled: 1
+  config: "configs/api.preprod.conf"
+  resources:
+    limits:
+      memory: 126Mi
+    requests:
+      cpu: 50m
+      memory: 50Mi
+
+# Horizontal Pod Autoscaler
+autoscaling:
+  enabled: 0
+  minReplicas: 1
+  maxReplicas: 3
+  cpu:
+    enabled: 1
+    targetPercentage: 60
+  memory:
+    enabled: 1
+    targetPercentage: 80
+
+envs:
+  - name: TRACE_AGENT_ENABLED
+    value: "1"
+  - name: GOOGLE_CLOUD_PROJECT
+    value: "commande-com-preprod"
+  - name: GOOGLE_APPLICATION_CREDENTIALS
+    value: "/secrets/stackdriver/trace-agent.json"
+  - name: GCP_GS_PROJECT
+    value: "commande-com-preprod"
+  - name: GCP_GS_BUCKET
+    value: "commande-com-preprod-media"
+  - name: GCP_GS_FILES_BUCKET
+    value: "commande-com-preprod-files"
+  - name: GCP_GS_ETL_BUCKET
+    value: "commande-com-preprod-etl-test"
+  - name: GCP_GS_KEY
+    value: "/secrets/storage/storage-user.json"
+  - name: GCP_GS_TERM_FOLDER
+    value: "cgv/"
+  - name: GCP_GS_ORDER_FOLDER
+    value: "export/"
+  - name: GCP_GS_URL
+    value: "https://storage.googleapis.com/"
+  - name: UPDATE_PASSWORD_LINK
+    value: "http://pp.commande.com/password-change"
+  - name: DATABASE_HOST
+    value: 127.0.0.1
+  - name: DATABASE_NAME
+    value: catalogue
+  - name: DATABASE_USER
+    valueFrom:
+      secretKeyRef:
+        name: cloudsql-db-credentials
+        key: username
+  - name: DATABASE_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: cloudsql-db-credentials
+        key: password
+  - name: MAILER_TRANSPORT
+    value: "mailjet"
+  - name: MAILER_DEFAULT_SENDER_ADDRESS
+    value: "no-reply@commande.com"
+  - name: MAILER_USER
+    value: "f404252027aa78789c1de023c402d77b"
+  - name: MAILER_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: mailer
+        key: password
+
+trace:
+  enabled: true
+
+cloudsqlproxy:
+  # set to false to disable cloud sql proxy
+  connectionName: "commande-com-preprod:europe-west1:commande-com-database"
+  credentialsSecret: "cloudsql-instance-credentials"
+  resources:
+    limits:
+      memory: 50Mi
+    requests:
+      cpu: 10m
+      memory: 50Mi

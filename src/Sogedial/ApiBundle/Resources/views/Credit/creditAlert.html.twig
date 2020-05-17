@@ -1,0 +1,12 @@
+Saisie par le client le {{ 'now'|date('d/m/Y') }} à {{ 'now'|date('H') }}h{{ 'now'|date('i') }}<br>
+DEMANDE D'AVOIR<br>
+Client: {{ clientSiret }} {{ clientName }}<br>
+N° de Facture: {{ invoiceNumber }}<br><br>
+{% for newCredit in newCredits %}
+    Ref: {{ newCredit.invoiceItem.item.code }}; {{ newCredit.invoiceItem.item.name }}; {{ newCredit.quantity }} unité(s); {{ newCredit.reason }}; {{ newCredit.comment }}<br>
+    {% if newCredit.checked == true %}
+        Litige vu avec le livreur <br>
+    {% endif %}
+    <br>
+{% endfor %}
+Fin de la demande d'avoir

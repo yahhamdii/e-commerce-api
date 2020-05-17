@@ -1,0 +1,131 @@
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: {{ template "commande-com-api.fullname" . }}
+  labels:
+    app: {{ template "commande-com-api.name" . }}
+    chart: {{ template "commande-com-api.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+{{- with .Values.strategy }}
+  strategy:
+{{ toYaml . | indent 4 }}
+{{- end }}
+  selector:
+    matchLabels:
+      app: {{ template "commande-com-api.name" . }}
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "commande-com-api.name" . }}
+        release: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: php
+          image: "{{ .Values.php.image.repository }}:{{ .Values.php.image.tag }}"
+          imagePullPolicy: {{ .Values.php.image.pullPolicy }}
+          ports:
+            - name: php
+              containerPort: 9000
+              protocol: TCP
+          volumeMounts:
+            - name: storage-user
+              mountPath: /secrets/storage
+              readOnly: true
+{{ if .Values.trace.enabled }}
+            - name: trace-agent
+              mountPath: /secrets/stackdriver
+              readOnly: true
+{{ end }}
+{{ if .Values.php.config }}
+            - name: configs
+              mountPath: /usr/local/etc/php/php.ini
+              subPath: php.ini
+{{ end }}
+          env:
+{{ toYaml .Values.envs | indent 12 }}
+          resources:
+{{ toYaml .Values.php.resources | indent 12 }}
+        - name: nginx
+          image: "{{ .Values.nginx.image.repository }}:{{ .Values.nginx.image.tag }}"
+          imagePullPolicy: {{ .Values.nginx.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          resources:
+{{ toYaml .Values.nginx.resources | indent 12 }}
+{{ if .Values.nginx.liveness.enabled }}
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            timeoutSeconds: 5
+{{ end }}
+{{ if .Values.nginx.readiness.enabled }}
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            timeoutSeconds: 5
+{{ end }}
+          volumeMounts:
+{{ if .Values.nginx.config }}
+            - name: configs
+              mountPath: /etc/nginx/conf.d/api.conf
+              subPath: api.conf
+{{ end }}
+
+{{ if .Values.cloudsqlproxy.enabled }}
+        - name: cloudsqlproxy
+          image: gcr.io/cloudsql-docker/gce-proxy:1.14
+          command:
+          - /cloud_sql_proxy
+          - -instances={{ .Values.cloudsqlproxy.connectionName }}=tcp:3306
+          - -credential_file=/secrets/cloudsql/credentials.json
+          - -log_debug_stdout
+          resources:
+{{ toYaml .Values.cloudsqlproxy.resources | indent 12 }}
+          volumeMounts:
+            - name: cloudsql-instance-credentials
+              mountPath: /secrets/cloudsql
+              readOnly: true
+{{ end }}
+      volumes:
+        - name: storage-user
+          secret:
+            secretName: storage-user
+            items:
+            - key: storage-user.json
+              path: storage-user.json
+        - name: configs
+          configMap:
+            name:  {{ template "commande-com-api.fullname" . }}
+
+{{ if .Values.trace.enabled }}
+        - name: trace-agent
+          secret:
+            secretName: trace-agent
+{{ end }}
+{{ if .Values.cloudsqlproxy.enabled }}
+        - name: cloudsql-instance-credentials
+          secret:
+            secretName: {{ .Values.cloudsqlproxy.credentialsSecret }}
+{{ end }}
+    {{- with .Values.nodeSelector }}
+      nodeSelector:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+{{ toYaml . | indent 8 }}
+    {{- end }}

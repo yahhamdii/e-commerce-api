@@ -1,0 +1,4 @@
+services:
+    sogedial.o_auth.utils.password_updater:
+        class: Sogedial\OAuthBundle\Utils\PasswordUpdater
+        arguments: ["@security.encoder_factory"]

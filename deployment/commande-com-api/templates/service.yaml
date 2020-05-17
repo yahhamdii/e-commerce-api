@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "commande-com-api.fullname" . }}
+  labels:
+    app: {{ template "commande-com-api.name" . }}
+    chart: {{ template "commande-com-api.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app: {{ template "commande-com-api.name" . }}
+    release: {{ .Release.Name }}

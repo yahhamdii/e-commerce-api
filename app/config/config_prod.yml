@@ -1,0 +1,27 @@
+imports:
+    - { resource: config.yml }
+
+#doctrine:
+#    orm:
+#        metadata_cache_driver: apc
+#        result_cache_driver: apc
+#        query_cache_driver: apc
+
+monolog:
+    handlers:
+        filter_for_errors:
+            type: fingers_crossed
+            # if *one* log is error or higher, pass *all* to file_log
+            action_level: debug
+            handler: file_log
+        # now passed *all* logs, but only if one log is error or higher
+        file_log:
+            type: stream
+            path: "php://stderr"
+            channels: ['!event']
+            formatter:  monolog_formatter
+
+        # still passed *all* logs, and still only logs error or higher
+        syslog_handler:
+            type: syslog
+            level: error

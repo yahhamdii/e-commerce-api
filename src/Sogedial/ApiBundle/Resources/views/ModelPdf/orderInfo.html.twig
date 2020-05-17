@@ -1,0 +1,17 @@
+<div style=" text-align: left; font-size: 9px; padding: -23px; margin-left: 13px">
+    <strong>Fournisseur: {{ order.platform.name | upper }}</strong>
+</div>
+<div style=" text-align: center; font-size: 9px; padding: -23px;">
+    <strong>
+        {% if order.deliveryMode == true %}
+            Date de retrait indicative:
+        {% else %}
+            Date de livraison indicative:
+        {% endif %}
+
+        {% if order.isPreorder == true %} {{ order.preOrderDeliveryDate | date('d/m/Y') }}
+        {% else %} {{ order.dateDelivery | date('d/m/Y') }} {% endif %}
+    </strong>
+</div>
+<div style=" text-align: right; font-size: 9px; padding: -23px; margin-right: 13px;"><strong>Bon de commande N° {{ order.number }} </strong></div>
+<div style=" text-align: right; font-size: 7px; padding: -12px; margin-right: 0;"><strong><i>(Sous réserve de disponibilité)</i></strong></div>

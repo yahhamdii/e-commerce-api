@@ -1,0 +1,10 @@
+
+auth_server_auth_login:
+    path:  /oauth/v2/auth_login
+    defaults: { _controller: OAuthBundle:Security:login }
+
+oauth_server_auth_login_check:
+    path:  /oauth/v2/auth_login_check
+
+logout:
+    path: /oauth/v2/auth_logout

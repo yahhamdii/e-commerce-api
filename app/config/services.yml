@@ -1,0 +1,135 @@
+parameters:
+  class_user_repository: Sogedial\OAuthBundle\Repository\UserRepository
+  class_user_provider: Sogedial\OAuthBundle\Security\UserProvider
+  class_mailer: Sogedial\OAuthBundle\Mailer\Mailer
+  class_repository_injecter: Sogedial\ApiBundle\Service\RepositoryInjecter
+  class_cart_manager: Sogedial\ApiBundle\Service\CartManager
+  generate.file.as400.class: Sogedial\ApiBundle\Service\GenerateFileManager
+  class_translator_exception_listener: Sogedial\ApiBundle\Listener\TranslatorExceptionListener
+  class_generate_pdf_order: Sogedial\ApiBundle\Service\GeneratePdf
+  class_cart_checker: Sogedial\ApiBundle\Listener\CartCheckerListener
+  class_container_manager: Sogedial\ApiBundle\Service\ContainerManager
+  class_client_activation: Sogedial\ApiBundle\Service\ClientActivation
+
+services:
+  sogedial.oauth.utils.password_updater:
+    class: Sogedial\OAuthBundle\Utils\PasswordUpdater
+    arguments: ["@security.encoder_factory"]
+
+  sogedial.oauth.repository_user:
+    class: '%class_user_repository%'
+    factory: ['@doctrine.orm.entity_manager',getRepository]
+    arguments:
+      - Sogedial\OAuthBundle\Entity\User
+
+  sogedial.oauth.user_provider:
+    class: '%class_user_provider%'
+    arguments: ['@sogedial.oauth.repository_user','@sogedial.oauth.utils.password_updater','@doctrine.orm.entity_manager']
+
+      # sogedial.oauth.event_listener:
+      ##    class:  Sogedial\OAuthBundle\EventListener\OAuthEventListener
+      ##    arguments: ["@monolog.logger", "@security.token_storage", "@fos_oauth_server.storage"]
+      ##    tags:
+      ##      - { name: kernel.event_listener, event: fos_oauth_server.pre_authorization_process, method: onPreAuthorizationProcess }
+    ##      - { name: kernel.event_listener, event: fos_oauth_server.post_authorization_process, method: onPostAuthorizationProcess }
+    ##      - { name: kernel.event_listener, event: security.authentication.success, method: onAuthenticationSuccess }
+    ##      - { name: kernel.event_listener, event: security.interactive_login, method: onInteractiveLogin }
+    ##      - { name: kernel.event_listener, event: kernel.response, method: onKernelResponse }
+
+  monolog_formatter:
+    class: Monolog\Formatter\LineFormatter
+    arguments:
+      - "{\"severity\":  \"%%level_name%%\", \"message\": \"%%message%%\", \"timestamp\": \"%%datetime%%\", \"content\": %%context%%}\n"
+      - U
+  sogedial_api.log.listener:
+    class: Sogedial\ApiBundle\Listener\LogListener
+    arguments: ['@service_container','@monolog.logger']
+    tags:
+      - { name: kernel.event_listener, event: kernel.request, method: logStarting }
+      - { name: kernel.event_listener, event: kernel.response, method: logEnding }
+      - { name: kernel.event_listener, event: kernel.exception, method: logError }
+  jms_serializer.object_constructor:
+    alias: jms_serializer.doctrine_object_constructor
+    public: false
+  sogedial.oauth.mailer:
+    public: true
+    class: '%class_mailer%'
+    arguments:
+      - '@mailer'
+      - '@templating'
+      - '%mailer_default_sender_address%'
+      - '@sogedial.generate_pdf_order'
+  sogedial.repository_injecter:
+    class: '%class_repository_injecter%'
+    arguments:
+      - '@security.token_storage'
+      - '@doctrine.orm.entity_manager'
+  sogedial.cart_order_converter:
+    class: '%class_cart_manager%'
+    arguments:
+      - '@security.token_storage'
+      - '@doctrine.orm.entity_manager'
+      - '@security.access.decision_manager'
+      - '@sogedial.as400.commande.file'
+      - '@sogedial.oauth.mailer'
+  sogedial.insertUser.listener:
+    class: Sogedial\ApiBundle\EventListener\InsertUserListener
+    arguments:
+      - '@security.token_storage'
+    tags:
+      - { name: doctrine.event_listener, event: postLoad }
+  Sogedial\ApiBundle\Listener\OrderUpdater:
+    tags:
+      - { name: doctrine.event_listener, event: postPersist }
+
+  sogedial.as400.commande.file:
+    class: %generate.file.as400.class%
+    arguments: ['%kernel.root_dir%', "@doctrine.orm.entity_manager", "@service_container"]
+
+  sogedial.translator_message_exception:
+    class: '%class_translator_exception_listener%'
+    arguments:
+      - '@translator'
+    tags:
+      - { name: kernel.event_listener, event: kernel.exception, method: translate }
+
+  fos_oauth_server.controller.token:
+    class: Sogedial\OAuthBundle\Controller\TokenController
+    arguments:
+      - '@fos_oauth_server.server'
+      - '@doctrine.orm.entity_manager'
+
+  sogedial.generate_pdf_order:
+    class: '%class_generate_pdf_order%'
+    arguments:
+      - '%kernel.root_dir%'
+      - '@templating'
+
+  sogedial_cart_checker:
+    class: '%class_cart_checker%'
+    arguments:
+      - '@doctrine.orm.entity_manager'
+    tags:
+      - {name: doctrine.event_listener, event: postLoad}      
+
+  sogedial_user.session_generator:
+    class: Sogedial\OAuthBundle\EventListener\UserSessionListener
+    arguments:
+      - '@request_stack'
+    tags:
+      - { name: doctrine.event_listener, event: postPersist}
+
+
+  sogedial.container_manager:
+    class: '%class_container_manager%'
+    arguments:
+      - '@doctrine.orm.entity_manager'
+
+  sogedial_client_activation:
+    class: '%class_client_activation%'
+    arguments:
+      - '@doctrine.orm.entity_manager'
+      - '@request_stack'
+      - '@sogedial.oauth.mailer'
+      - '@security.token_storage'
+      - '%update_password_link%'

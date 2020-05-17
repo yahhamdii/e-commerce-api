@@ -1,0 +1,33 @@
+imports:
+    - { resource: config.yml }
+    
+parameters:
+    resettingRetryTtl: 0
+
+framework:
+    router:
+        resource: '%kernel.project_dir%/app/config/routing_dev.yml'
+        strict_requirements: true
+    profiler: { only_exceptions: false }
+
+web_profiler:
+    toolbar: true
+    intercept_redirects: false
+monolog:
+    handlers:
+        filter_for_errors:
+            type: fingers_crossed
+            # if *one* log is error or higher, pass *all* to file_log
+            action_level: debug
+            handler: file_log
+        # now passed *all* logs, but only if one log is error or higher
+        file_log:
+            type: stream
+            path: '%kernel.logs_dir%/dev.log'
+            channels: ['!event']
+            formatter:  monolog_formatter
+
+        # still passed *all* logs, and still only logs error or higher
+        syslog_handler:
+            type: syslog
+            level: error

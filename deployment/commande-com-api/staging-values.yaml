@@ -1,0 +1,116 @@
+---
+replicaCount: 2
+
+ingress:
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "http://staging.commande.com https://staging.commande.com"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization,X-Switch-User"
+  path: /
+  hosts:
+    - api.staging.commande.com
+    - api-staging.commande.com
+  tls:
+    - secretName: default-ingress-tls
+      hosts:
+        - api.staging.commande.com
+        - api-staging.commande.com
+
+php:
+  image:
+    repository: eu.gcr.io/safo-staging/commande-com-api
+  config: "configs/php.staging.ini"
+  resources:
+    limits:
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 256Mi
+
+nginx:
+  image:
+    repository: eu.gcr.io/safo-staging/commande-com-api
+  liveness:
+    enabled: 1
+  readiness:
+    enabled: 1
+  config: "configs/api.staging.conf"
+  resources:
+    limits:
+      memory: 126Mi
+    requests:
+      cpu: 50m
+      memory: 50Mi
+
+# Horizontal Pod Autoscaler
+autoscaling:
+  enabled: 1
+  minReplicas: 2
+  maxReplicas: 5
+  cpu:
+    enabled: 1
+    targetPercentage: 60
+  memory:
+    enabled: 1
+    targetPercentage: 80
+
+envs:
+#  - name: GOOGLE_CLOUD_PROJECT
+#    value: "safo-staging"
+  - name: GCP_GS_PROJECT
+    value: "safo-staging"
+  - name: GCP_GS_BUCKET
+    value: "commande-com-staging-media"
+  - name: GCP_GS_FILES_BUCKET
+    value: "commande-com-staging-media"
+  - name: GCP_GS_ETL_BUCKET
+    value: "commande-com-staging-etl"
+  - name: GCP_GS_KEY
+    value: "/secrets/storage/storage-user.json"
+  - name: GCP_GS_TERM_FOLDER
+    value: "cgv/"
+  - name: GCP_GS_ORDER_FOLDER
+    value: "export/"
+  - name: GCP_GS_URL
+    value: "https://storage.googleapis.com/"
+  - name: UPDATE_PASSWORD_LINK
+    value: "http://staging.commande.com/password-change"
+  - name: DATABASE_HOST
+    value: database
+  - name: DATABASE_NAME
+    value: catalog
+  - name: DATABASE_USER
+    valueFrom:
+      secretKeyRef:
+        name: cloudsql-db-credentials
+        key: username
+  - name: DATABASE_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: cloudsql-db-credentials
+        key: password
+
+  - name: MAILER_TRANSPORT
+    value: "mailjet"
+  - name: MAILER_DEFAULT_SENDER_ADDRESS
+    value: "no-reply@commande.com"
+  - name: MAILER_USER
+    value: "f404252027aa78789c1de023c402d77b"
+  - name: MAILER_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: mailer
+        key: password
+
+trace:
+  enabled: false 
+
+cloudsqlproxy:
+  enabled: false
+
+strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxSurge: 1
+    maxUnavailable: 75%

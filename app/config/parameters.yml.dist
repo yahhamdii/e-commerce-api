@@ -1,0 +1,28 @@
+# This file is auto-generated during the composer install
+parameters:
+    database_host: localhost
+    database_port: 3306
+    env(DATABASE_PORT): 3306
+    database_name: qualif
+    database_user: root
+    database_password: rootroot
+    database_driver: pdo_mysql
+    env(DATABASE_DRIVER): pdo_mysql
+    mailer_transport: mailjet
+    mailer_user: f404252027aa78789c1de023c402d77b
+    mailer_password: 08c3889f510d8704b5ab9c33c94b6444
+    mailer_default_sender_address: no-reply@commande.com
+    sftp_host: '%env(SFTP_HOST)%'
+    sftp_port: '%env(SFTP_PORT)%'
+    sftp_username: '%env(SFTP_USERNAME)%'
+    sftp_password: '%env(SFTP_PASSWORD)%'
+    sftp_directoryTarget: '%env(SFTP_DIRECTORY_TARGET)%'
+    gcp_gs_files_bucket: commande-com-preprod-test
+    gcp_gs_etl_bucket: commande-com-preprod-etl-test
+    gcp_gs_project: commande-com-preprod
+    gcp_gs_key: 'C:\wamp64\www\storage-dev.json'
+    gcp_gs_term_folder: cgv/
+    gcp_gs_url: 'https://storage.googleapis.com/'
+    gcp_gs_order_folder: export/
+    secret: ThisTokenIsNotSoSecretChangeIt
+    update_password_link: 'http://localhost:3000/password-change'

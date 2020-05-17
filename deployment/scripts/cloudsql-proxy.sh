@@ -1,0 +1,30 @@
+#!/bin/bash
+
+set -e
+
+export ENV=${1}
+
+case  ${ENV} in
+"preprod")
+export GOOGLE_APPLICATION_CREDENTIALS=${GCLOUD_SQL_PROXY_KEYFILE_PREPROD}
+export CONNECTION_NAME=${CONNECTION_NAME_PREPROD}
+
+export DATABASE_USER=${DATABASE_USER_PREPROD}
+export DATABASE_PASSWORD=${DATABASE_PASSWORD_PREPROD}
+;;
+"qualif")
+export GOOGLE_APPLICATION_CREDENTIALS=${GCLOUD_SQL_PROXY_KEYFILE_QUALIF}
+export CONNECTION_NAME=${CONNECTION_NAME_QUALIF}
+
+export DATABASE_USER=${DATABASE_USER_QUALIF}
+export DATABASE_PASSWORD=${DATABASE_PASSWORD_QUALIF}
+;;
+*)
+  echo "Environment not supported!"
+  exit 1;
+;;
+esac
+
+
+docker run -d -p 3306:3306 --name cloudsql-proxy -e GOOGLE_APPLICATION_CREDENTIALS=${GOOGLE_APPLICATION_CREDENTIALS} -e CONNECTION_NAME=${CONNECTION_NAME}  hamdifourati/cloudsql-proxy:latest
+docker logs cloudsql-proxy

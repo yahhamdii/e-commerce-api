@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "commande-com-api.fullname" . }}
+  labels:
+    app: {{ template "commande-com-api.name" . }}
+    chart: {{ template "commande-com-api.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+data:
+{{ if .Values.nginx.config }}
+  api.conf: |-
+{{ .Files.Get .Values.nginx.config | indent 4 }}
+{{ end }}
+{{ if .Values.php.config }}
+  php.ini: |-
+{{ .Files.Get .Values.php.config | indent 4 }}
+{{ end }}
+

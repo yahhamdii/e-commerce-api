@@ -1,0 +1,19 @@
+sogedial_api:
+    resource: "@SogedialApiBundle/Controller/"
+    type:     annotation
+    prefix:   /
+
+sogedial_o_auth:
+    resource: "@OAuthBundle/Resources/config/routing.yml"
+    prefix:   /
+
+oyez:
+    resource: '@OAuthBundle/Controller/'
+    type: annotation
+
+
+fos_oauth_server_token:
+    resource: "@FOSOAuthServerBundle/Resources/config/routing/token.xml"
+
+fos_oauth_server_authorize:
+    resource: "@FOSOAuthServerBundle/Resources/config/routing/authorize.xml"

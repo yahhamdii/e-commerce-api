@@ -1,0 +1,85 @@
+<div>
+    <table style="width: 100%; margin-top: 15px;">
+  
+        <thead>
+       <tr>
+        {% if order.platform.name|lower == 'sofrigu' %}
+        <td colspan="8" style="border:0; padding: 10px;">
+        {% include 'SogedialApiBundle:ModelPdf:orderInfo.html.twig' %}
+        </td>
+            {% else %}
+        <td colspan="7" style="border:0; padding: 10px;" >
+       {% include 'SogedialApiBundle:ModelPdf:orderInfo.html.twig' %}
+       </td>
+        {% endif %}
+       </tr>
+        <tr class="borderStyle" style="background-color: #dddddd">
+         
+            <th style="text-align: center">EAN</th>
+            <th style="text-align: center">Réf.</th>
+            <th style="text-align: center">Libellé</th>
+            <th style="text-align: center">PCB</th>
+
+            {% if order.platform.name|lower == 'sofrigu' %}
+                <th style="text-align: center">Qte</th>
+                <th style="text-align: center">Colisage</th>
+            {% else %}
+                <th style="text-align: center">Nb colis</th>
+            {% endif %}
+
+            {% if order.platform.name|lower == 'sofrigu' %}
+                <th style="text-align: center">P.U TTC €</th>
+                <th style="text-align: center">Total TTC €</th>
+            {% else %}
+                <th style="text-align: center">P.U HT €</th>
+                <th style="text-align: center">Total HT €</th>
+            {% endif %}
+        </tr>
+        </thead>
+        <tbody>
+
+        {% for key,value in orderItemByCategory %}
+
+        <tr style="border: solid 1px; background-color: darkgrey">
+            {% if order.platform.name|lower == 'sofrigu' %}
+                <td colspan="8" style="text-align: center">{{ key }} </td>
+            {% else %}
+                <td colspan="7" style="text-align: center">{{ key }}</td>
+            {% endif %}
+        </tr>
+        {% for orderItem in value %}
+            <tr>
+                <td style="width:100px;"><img src="{{ tempDir ~ '/' ~ orderItem.itemEan13 ~ '.png' }}"
+                            width="130px" height="30px"></td>
+
+                <td style="text-align: center; width:30;">{{ orderItem.itemReference }}</td>
+                <td  style="width:225px;" >{{ orderItem.itemName }}</td>
+
+                {% if order.platform.name|lower == 'sofrigu' %}
+                    {% if orderItem.item.unity is defined and orderItem.item.unity == 'KILOGRAMME' %}
+                        <td style="text-align: center">{{ orderItem.itemPcb }} kg/colis</td>
+                    {% else %}
+                        <td style="text-align: center">{{ orderItem.itemPcb }} u/colis</td>
+                    {% endif %}
+                {% else %}
+                    <td style="text-align: center">{{ orderItem.itemPcb }}</td>
+                {% endif %}
+
+                <td style="text-align: center">{{ orderItem.quantity }}</td>
+                {% if order.platform.name|lower == 'sofrigu' %}
+                    {% if orderItem.item.unity is defined and orderItem.item.unity == 'KILOGRAMME' %}
+                        <td style="text-align: center">Kg</td>
+                    {% else %}
+                        <td style="text-align: center">Unité</td>
+                    {% endif %}
+                {% endif %}
+
+                <td style="text-align: center">{{ orderItem.itemPrice }} €</td>
+                <td style="text-align: center">{{ orderItem.finalPrice|number_format(2, ".", " ") }} €</td>
+            </tr>
+        {% endfor %}
+        {% endfor %}
+
+        </tbody>
+    </table>
+</div>

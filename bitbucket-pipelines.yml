@@ -1,0 +1,85 @@
+image: php:7.2
+
+pipelines:
+  branches:
+    master:
+      - step:
+          name: Build and Deploy preprod
+          caches:
+          - composer
+          - docker
+          script:
+          - export COMPOSER_MEMORY_LIMIT=-1
+          - apt -qq update && apt -qq install -y wget git unzip python libpng-dev zlib1g-dev
+          - curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+          # Start Cloud SQL Proxy and set env variables
+          - source deployment/scripts/cloudsql-proxy.sh preprod
+          - docker-php-ext-install zip gd pdo pdo_mysql
+          - composer install --no-interaction
+          - bash deployment/scripts/configure.sh preprod
+          - bash deployment/scripts/build.sh preprod
+          - bash deployment/scripts/deploy.sh preprod
+          - echo "Recreating Database.."
+          #- php bin/console doctrine:database:drop -v --force
+          #- php bin/console doctrine:database:create
+          - echo "Updating Database schema.."
+          - php bin/console doctrine:schema:update --force
+          artifacts:
+          - "**"
+      - step:
+          name: Deploy qualif
+          trigger: manual
+          script:
+          - apt -qq update && apt -qq install -y curl wget git unzip python
+          - bash deployment/scripts/configure.sh qualif
+          - bash deployment/scripts/deploy.sh qualif
+          # updating schema
+          - source deployment/scripts/cloudsql-proxy.sh qualif
+          - docker-php-ext-install pdo pdo_mysql
+          - echo "Updating Database schema.."
+          - php bin/console doctrine:schema:update --force
+    staging:
+      - parallel:
+        - step:
+            name: "Mirror to safo"
+            script:
+            - bash deployment/scripts/mirror.sh
+        - step:
+            name: Build and Deploy Staging
+            caches:
+            - composer
+            - docker
+            services:
+            - mysql
+            script:
+            - bash deployment/scripts/staging.sh
+    production:
+      - step:
+          name: Build and Deploy production
+          caches:
+          - composer
+          - docker
+          services:
+          - mysql
+          script:
+          - export COMPOSER_MEMORY_LIMIT=-1
+          - apt -qq update && apt -qq install -y wget git unzip python libpng-dev zlib1g-dev
+          - curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+          - docker-php-ext-install zip gd pdo pdo_mysql
+          - composer install --no-interaction
+          - bash deployment/scripts/configure.sh prod
+          - bash deployment/scripts/build.sh staging
+          - bash deployment/scripts/deploy.sh prod
+
+options:
+  docker: true
+
+definitions:
+  services:
+    mysql:
+      image: mysql:5.7
+      variables:
+        MYSQL_DATABASE: catalog
+        MYSQL_USER: catalog
+        MYSQL_PASSWORD: catalog
+        MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
