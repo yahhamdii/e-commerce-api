@@ -14,7 +14,6 @@ use Sogedial\ApiBundle\Entity\Attribut;
 /**
  * Attribut controller.
  *
- * @Security("has_role('ROLE_SUPER_ADMIN')")
  * @Rest\Route(path="/api/attribut")
  */
 class AttributController extends Controller
