@@ -18,7 +18,6 @@ use Sogedial\OAuthBundle\Entity\UserCustomer;
 /**
  * Category controller.
  *
- * @Security("has_role('ROLE_SUPER_ADMIN')")
  * @Rest\Route(path="/api/category")
  */
 class CategoryController extends Controller {
